@@ -1,0 +1,134 @@
+<html>
+<head>
+
+</head>
+
+<body>
+<h3>Choose parameters and start simulation:</h3>
+Headcount:<input type="number" id="people" style="padding:3px; background-color:FFFFCC" value=25>	
+Infection range:<input type="number" id="distance" style="padding:3px; background-color:FFFFCC" value=100>
+Exposure limit:<input type="number" id="threshold" style="padding:3px; background-color:FFFFCC" value=80>
+<input type="button" id="animate" value="Start Simulation" onclick="start_animation()">
+<canvas id="drawing" width="900" height="500" style="border: 1px solid black;"> </canvas>
+
+</body>
+</html>
+
+<script>
+
+var myCanvas = document.getElementById("drawing");
+var ctx = myCanvas.getContext("2d");
+var ended;
+var can_width = myCanvas.width;
+var can_height = myCanvas.height;
+var n = 25;
+var max_link_size = 100;
+var exposure_threshold = 80;
+var x_list = [];
+var dx_list = [];
+var y_list = [];
+var dy_list = [];
+var exposure_list = [];
+var cnt;
+
+function start_animation(){
+	cnt = 0;
+	ended = false;
+	n = document.getElementById('people').value;
+	max_link_size = document.getElementById('distance').value;
+	exposure_threshold = document.getElementById('threshold').value;
+	x_list = [];
+	dx_list = [];
+	y_list = [];
+	dy_list = [];
+	exposure_list = [];
+	for (i=0; i<n;i++){
+		x_list.push(Math.random()*can_width);
+		dx_list.push(Math.random()*6-3.0);
+		y_list.push(Math.random()*can_height);
+		dy_list.push(Math.random()*6-3.0);
+		exposure_list.push(0);
+	}
+	exposure_list[0] = exposure_threshold;
+	draw_points();
+}
+
+	
+
+
+function draw_points(){
+	ctx.clearRect(0, 0, can_width, can_height);
+	cnt += 1;
+	var exposed = 0;
+	for (i=0; i<n;i++){
+		if (exposure_list[i]>=exposure_threshold) {
+			ctx.fillStyle = 'rgba(255, 0, 0, 0.8)';
+			exposed++;
+		}
+		else {
+			ctx.fillStyle = 'rgba(0, 255, 0, 0.8)';
+		}
+		ctx.fillRect(x_list[i]-6, y_list[i]-6, 12, 12);
+	}
+	ctx.fillStyle = 'rgba(100, 100, 0, 0.4)';
+	ctx.font = "50px Impact";
+	ctx.fillText("Exposed: "+exposed, 10, 60);
+	if (exposed == n){
+		end_animation();
+	};
+	if (!ended){
+		draw_lines();
+		next_move();
+	}
+return;
+}
+
+function draw_lines(){
+	for (i=0; i<n-1;i++){
+		for (j=i+1; j<n;j++){
+			var dist = Math.sqrt((x_list[i]-x_list[j])**2+(y_list[i]-y_list[j])**2);
+			if (dist<max_link_size) {
+				if (exposure_list[i]>=exposure_threshold || exposure_list[j]>=exposure_threshold){
+					var opacity = Math.round((1-dist/max_link_size)*10)/10;
+					ctx.strokeStyle = 'rgba(255, 0, 0, '+opacity+')';
+					ctx.beginPath();
+					ctx.moveTo(x_list[i], y_list[i]);
+					ctx.lineTo(x_list[j], y_list[j]);
+					ctx.stroke();
+					if (exposure_list[i]>=exposure_threshold) {
+						exposure_list[j] += 1;
+					}
+					if (exposure_list[j]>=exposure_threshold) {
+						exposure_list[i] += 1;
+					}
+				}
+					
+			}
+		}
+	}
+}
+
+function next_move(){
+	for (i=0; i<n;i++){
+		x_list[i] += dx_list[i];
+		if (x_list[i]<=0 || x_list[i]>=can_width){
+			dx_list[i] = -dx_list[i];
+		}
+		y_list[i] += dy_list[i];
+		if (y_list[i]<=0 || y_list[i]>=can_height){
+			dy_list[i] = -dy_list[i];
+		}
+	}
+	setTimeout(function(){
+		draw_points();
+	},15)
+}
+
+function end_animation(){
+	ctx.font = "30px Arial";
+	ctx.fillStyle = 'rgba(200, 0, 200, 0.4)';
+	ctx.fillText("Total time taken : "+cnt, 10, 110);
+	ended = true; 
+}
+
+</script>
